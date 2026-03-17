@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head><title>Editare Echipa</title></head>
+<body>
+<div layout:fragment="content">
+    <h2 th:text="${team.id != null ? 'Editare Echipa' : 'Echipa Noua'}"></h2>
+
+    <div class="card bg-secondary text-light">
+        <div class="card-body">
+            <form th:action="${team.id != null ? '/teams/' + team.id : '/teams'}" method="post">
+                <div class="mb-3">
+                    <label for="nume" class="form-label">Nume Echipa</label>
+                    <input type="text" class="form-control" id="nume" name="nume"
+                           th:value="${team.nume}" required>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="nrCampionate" class="form-label">Campionate</label>
+                        <input type="number" class="form-control" id="nrCampionate" name="nrCampionate"
+                               th:value="${team.nrCampionate}" min="0" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="nrPodiumuri" class="form-label">Podiumuri</label>
+                        <input type="number" class="form-control" id="nrPodiumuri" name="nrPodiumuri"
+                               th:value="${team.nrPodiumuri}" min="0" required>
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-danger">Salveaza</button>
+                    <a th:href="@{/teams}" class="btn btn-outline-light">Anuleaza</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+</html>

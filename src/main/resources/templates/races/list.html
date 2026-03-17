@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      layout:decorate="~{layout}">
+<head><title>Curse</title></head>
+<body>
+<div layout:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Curse</h2>
+        <a sec:authorize="hasRole('ADMIN')" th:href="@{/races/new}" class="btn btn-danger">+ Adauga Cursa</a>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-dark table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>Circuit</th>
+                    <th>Distanta (km)</th>
+                    <th>Data</th>
+                    <th>Momentul zilei</th>
+                    <th>Sprint</th>
+                    <th sec:authorize="hasRole('ADMIN')">Actiuni</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="race : ${races}">
+                    <td th:text="${race.nume}"></td>
+                    <td th:text="${race.distanta}"></td>
+                    <td th:text="${#temporals.format(race.dataGp, 'dd-MM-yyyy')}"></td>
+                    <td th:text="${race.timeOfDay.label}"></td>
+                    <td th:text="${race.sprint ? 'Da' : 'Nu'}"></td>
+                    <td sec:authorize="hasRole('ADMIN')">
+                        <a th:href="@{/races/{id}/results(id=${race.id})}" class="btn btn-sm btn-success">Rezultate</a>
+                        <a th:href="@{/races/{id}/edit(id=${race.id})}" class="btn btn-sm btn-warning">Edit</a>
+                        <form th:action="@{/races/{id}/delete(id=${race.id})}" method="post" class="d-inline">
+                            <button type="submit" class="btn btn-sm btn-outline-danger"
+                                    onclick="return confirm('Stergi aceasta cursa?')">Sterge</button>
+                        </form>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>

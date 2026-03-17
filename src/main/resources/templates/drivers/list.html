@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      layout:decorate="~{layout}">
+<head><title>Driveri</title></head>
+<body>
+<div layout:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Driveri</h2>
+        <a sec:authorize="hasRole('ADMIN')" th:href="@{/drivers/new}" class="btn btn-danger">+ Adauga Driver</a>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-dark table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>Nume</th>
+                    <th>Echipa</th>
+                    <th>Campionate</th>
+                    <th>Puncte</th>
+                    <th>Podiumuri</th>
+                    <th>Castiguri</th>
+                    <th sec:authorize="hasRole('ADMIN')">Actiuni</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="driver : ${drivers}">
+                    <td th:text="${driver.nume}"></td>
+                    <td th:text="${driver.team.nume}"></td>
+                    <td th:text="${driver.campionate}"></td>
+                    <td th:text="${driver.nrPuncte}"></td>
+                    <td th:text="${driver.nrPodium}"></td>
+                    <td th:text="${driver.nrCastig}"></td>
+                    <td sec:authorize="hasRole('ADMIN')">
+                        <a th:href="@{/drivers/{id}/edit(id=${driver.id})}" class="btn btn-sm btn-warning">Edit</a>
+                        <form th:action="@{/drivers/{id}/delete(id=${driver.id})}" method="post" class="d-inline">
+                            <button type="submit" class="btn btn-sm btn-outline-danger"
+                                    onclick="return confirm('Stergi acest driver?')">Sterge</button>
+                        </form>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>

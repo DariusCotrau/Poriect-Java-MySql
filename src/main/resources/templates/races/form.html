@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head><title>Editare Cursa</title></head>
+<body>
+<div layout:fragment="content">
+    <h2 th:text="${race.id != null ? 'Editare Cursa' : 'Cursa Noua'}"></h2>
+
+    <div class="card bg-secondary text-light">
+        <div class="card-body">
+            <form th:action="${race.id != null ? '/races/' + race.id : '/races'}" method="post">
+                <div class="mb-3">
+                    <label for="nume" class="form-label">Nume Circuit</label>
+                    <input type="text" class="form-control" id="nume" name="nume"
+                           th:value="${race.nume}" required>
+                </div>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="distanta" class="form-label">Distanta (km)</label>
+                        <input type="number" class="form-control" id="distanta" name="distanta"
+                               th:value="${race.distanta}" min="0" required>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="dataGp" class="form-label">Data Cursei</label>
+                        <input type="date" class="form-control" id="dataGp" name="dataGp"
+                               th:value="${race.dataGp}" required>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="timeOfDay" class="form-label">Momentul zilei</label>
+                        <select class="form-select" id="timeOfDay" name="timeOfDay" required>
+                            <option th:each="tod : ${T(com.f1manager.model.TimeOfDay).values()}"
+                                    th:value="${tod}"
+                                    th:text="${tod.label}"
+                                    th:selected="${race.timeOfDay == tod}">
+                            </option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mb-3 form-check">
+                    <input type="checkbox" class="form-check-input" id="sprint" name="sprint"
+                           th:checked="${race.sprint}">
+                    <label class="form-check-label" for="sprint">Sprint</label>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-danger">Salveaza</button>
+                    <a th:href="@{/races}" class="btn btn-outline-light">Anuleaza</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+</html>

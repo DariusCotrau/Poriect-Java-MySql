@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head><title>Clasament Echipe</title></head>
+<body>
+<div layout:fragment="content">
+    <h2>Campionatul Echipelor</h2>
+
+    <div class="table-responsive">
+        <table class="table table-dark table-hover">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Echipa</th>
+                    <th>Puncte Totale</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="team, stat : ${teams}"
+                    th:classappend="${stat.index == 0 ? 'table-warning' : (stat.index == 1 ? 'table-secondary' : (stat.index == 2 ? 'table-danger' : ''))}">
+                    <td th:text="${stat.index + 1}"></td>
+                    <td th:text="${team.nume}"></td>
+                    <td class="fw-bold" th:text="${team.totalPuncte}"></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>

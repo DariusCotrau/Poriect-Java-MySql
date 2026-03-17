@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head><title>Rezultate Cursa</title></head>
+<body>
+<div layout:fragment="content">
+    <h2>Rezultate Cursa: <span th:text="${race.nume}"></span></h2>
+    <p class="text-muted">Selecteaza driverul pentru fiecare pozitie. Punctele se acorda automat.</p>
+
+    <div class="card bg-secondary text-light">
+        <div class="card-body">
+            <form th:action="@{/races/{id}/results(id=${race.id})}" method="post">
+                <div th:each="i : ${#numbers.sequence(0, 9)}" class="mb-3 row align-items-center">
+                    <label class="col-sm-3 col-form-label fw-bold">
+                        <span class="badge bg-danger me-2" th:text="${points[i]} + ' pct'"></span>
+                        Pozitia <span th:text="${i + 1}"></span>
+                    </label>
+                    <div class="col-sm-9">
+                        <select name="driverIds" class="form-select" required>
+                            <option th:each="driver : ${drivers}"
+                                    th:value="${driver.id}"
+                                    th:text="${driver.nume + ' (' + driver.team.nume + ')'}">
+                            </option>
+                        </select>
+                    </div>
+                </div>
+                <div class="d-flex gap-2 mt-3">
+                    <button type="submit" class="btn btn-success btn-lg">Confirma Rezultatele</button>
+                    <a th:href="@{/races}" class="btn btn-outline-light btn-lg">Anuleaza</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+</html>

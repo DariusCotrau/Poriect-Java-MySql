@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      layout:decorate="~{layout}">
+<head><title>Echipe</title></head>
+<body>
+<div layout:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Echipe</h2>
+        <a sec:authorize="hasRole('ADMIN')" th:href="@{/teams/new}" class="btn btn-danger">+ Adauga Echipa</a>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-dark table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>Echipa</th>
+                    <th>Campionate</th>
+                    <th>Podiumuri</th>
+                    <th>Puncte Totale</th>
+                    <th sec:authorize="hasRole('ADMIN')">Actiuni</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="team : ${teams}">
+                    <td th:text="${team.nume}"></td>
+                    <td th:text="${team.nrCampionate}"></td>
+                    <td th:text="${team.nrPodiumuri}"></td>
+                    <td th:text="${team.totalPuncte}"></td>
+                    <td sec:authorize="hasRole('ADMIN')">
+                        <a th:href="@{/teams/{id}/edit(id=${team.id})}" class="btn btn-sm btn-warning">Edit</a>
+                        <form th:action="@{/teams/{id}/delete(id=${team.id})}" method="post" class="d-inline">
+                            <button type="submit" class="btn btn-sm btn-outline-danger"
+                                    onclick="return confirm('Stergi aceasta echipa?')">Sterge</button>
+                        </form>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>
