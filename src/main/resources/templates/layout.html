@@ -34,6 +34,19 @@
                 <li class="nav-item">
                     <a class="nav-link" th:href="@{/leaderboard/teams}">Clasament Echipe</a>
                 </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle text-danger" href="#" role="button" data-bs-toggle="dropdown">
+                        F1 Live Data
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-dark">
+                        <li><a class="dropdown-item" th:href="@{/f1/calendar}">Calendar Sezon</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><h6 class="dropdown-header">Acces Rapid 2025</h6></li>
+                        <li><a class="dropdown-item" th:href="@{/f1/session(year=2025,round=1,sessionType='R')}">Cursa 1 – Australia</a></li>
+                        <li><a class="dropdown-item" th:href="@{/f1/fastest-laps(year=2025,round=1)}">Ture Rapide – Australia</a></li>
+                        <li><a class="dropdown-item" th:href="@{/f1/telemetry(year=2025,round=1,sessionType='R')}">Telemetrie – Australia</a></li>
+                    </ul>
+                </li>
             </ul>
             <ul class="navbar-nav">
                 <li class="nav-item" sec:authorize="!isAuthenticated()">

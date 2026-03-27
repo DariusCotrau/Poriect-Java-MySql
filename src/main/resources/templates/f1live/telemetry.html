@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <title>Telemetrie</title>
+    <style>
+        .chart-container { position: relative; height: 200px; margin-bottom: 1rem; }
+        .chart-label { font-size: 0.75rem; color: #aaa; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+<div layout:fragment="content">
+
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a th:href="@{/f1/calendar(year=${year})}">Calendar</a></li>
+            <li class="breadcrumb-item">
+                <a th:href="@{/f1/session(year=${year},round=${round},sessionType=${sessionType})}">Sesiune</a>
+            </li>
+            <li class="breadcrumb-item active">Telemetrie</li>
+        </ol>
+    </nav>
+
+    <h2 class="mb-3">Telemetrie — Tur Rapid</h2>
+
+    <div th:if="${driversData.error}" class="alert alert-danger">
+        <strong>Eroare:</strong> <span th:text="${driversData.error}"></span>
+    </div>
+
+    <!-- Driver selection form -->
+    <div th:if="${driversData.drivers != null}" class="card bg-secondary bg-opacity-10 border-secondary mb-4">
+        <div class="card-body">
+            <form method="get" action="/f1/telemetry" class="row g-2 align-items-end">
+                <input type="hidden" name="year" th:value="${year}"/>
+                <input type="hidden" name="round" th:value="${round}"/>
+
+                <div class="col-auto">
+                    <label class="form-label text-muted small">Sesiune</label>
+                    <select name="sessionType" class="form-select form-select-sm bg-dark text-light border-secondary">
+                        <option value="R" th:selected="${sessionType == 'R'}">Cursa</option>
+                        <option value="Q" th:selected="${sessionType == 'Q'}">Calificare</option>
+                        <option value="FP1" th:selected="${sessionType == 'FP1'}">Antrenament 1</option>
+                        <option value="FP2" th:selected="${sessionType == 'FP2'}">Antrenament 2</option>
+                        <option value="FP3" th:selected="${sessionType == 'FP3'}">Antrenament 3</option>
+                    </select>
+                </div>
+
+                <div class="col-auto">
+                    <label class="form-label text-muted small">Driver 1</label>
+                    <select name="driver" class="form-select form-select-sm bg-dark text-light border-secondary">
+                        <option value="">-- Selecteaza --</option>
+                        <option th:each="d : ${driversData.drivers}"
+                                th:value="${d.abbreviation}"
+                                th:text="${d.abbreviation + ' – ' + d.full_name}"
+                                th:selected="${d.abbreviation == selectedDriver}"></option>
+                    </select>
+                </div>
+
+                <div class="col-auto">
+                    <label class="form-label text-muted small">Driver 2 (comparatie)</label>
+                    <select name="driver2" class="form-select form-select-sm bg-dark text-light border-secondary">
+                        <option value="">-- Niciunul --</option>
+                        <option th:each="d : ${driversData.drivers}"
+                                th:value="${d.abbreviation}"
+                                th:text="${d.abbreviation + ' – ' + d.full_name}"
+                                th:selected="${d.abbreviation == selectedDriver2}"></option>
+                    </select>
+                </div>
+
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-danger btn-sm">Incarca Telemetrie</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Telemetry error -->
+    <div th:if="${telemetryData != null and telemetryData.error != null}" class="alert alert-warning">
+        <strong>Atentie:</strong> <span th:text="${telemetryData.error}"></span>
+        <p class="mt-1 mb-0 small">Prima incarcare poate dura 30-60 secunde (descarca datele din cache).</p>
+    </div>
+
+    <!-- Telemetry charts -->
+    <div th:if="${telemetryData != null and telemetryData.driver1 != null}" id="charts-section">
+
+        <!-- Driver info bar -->
+        <div class="d-flex gap-4 mb-3 p-3 rounded" style="background:#111">
+            <div>
+                <span class="text-muted small">Driver 1</span><br>
+                <strong th:text="${telemetryData.driver1.driver}"></strong>
+                <span th:text="${' Tur ' + telemetryData.driver1.lap_number}" class="text-muted ms-1"></span>
+                <span class="badge ms-2" style="font-size:0.8rem;"
+                      th:style="'background-color:' + ${telemetryData.driver1.team_color}"
+                      th:text="${telemetryData.driver1.lap_time}"></span>
+                <span class="badge bg-secondary ms-1" th:text="${telemetryData.driver1.compound}"></span>
+            </div>
+            <div th:if="${telemetryData.driver2 != null}">
+                <span class="text-muted small">Driver 2</span><br>
+                <strong th:text="${telemetryData.driver2.driver}"></strong>
+                <span th:text="${' Tur ' + telemetryData.driver2.lap_number}" class="text-muted ms-1"></span>
+                <span class="badge ms-2" style="font-size:0.8rem;"
+                      th:style="'background-color:' + ${telemetryData.driver2.team_color}"
+                      th:text="${telemetryData.driver2.lap_time}"></span>
+                <span class="badge bg-secondary ms-1" th:text="${telemetryData.driver2.compound}"></span>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="row">
+            <div class="col-12">
+                <div class="chart-label">Viteza (km/h)</div>
+                <div class="chart-container"><canvas id="speedChart"></canvas></div>
+            </div>
+            <div class="col-md-6">
+                <div class="chart-label">Acceleratie (%)</div>
+                <div class="chart-container"><canvas id="throttleChart"></canvas></div>
+            </div>
+            <div class="col-md-6">
+                <div class="chart-label">Frana</div>
+                <div class="chart-container"><canvas id="brakeChart"></canvas></div>
+            </div>
+            <div class="col-md-6">
+                <div class="chart-label">Treapta (gear)</div>
+                <div class="chart-container"><canvas id="gearChart"></canvas></div>
+            </div>
+            <div class="col-md-6">
+                <div class="chart-label">RPM</div>
+                <div class="chart-container"><canvas id="rpmChart"></canvas></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script th:if="${telemetryData != null and telemetryData.driver1 != null}" th:inline="javascript">
+        const d1 = [[${telemetryData.driver1}]];
+        const d2 = [[${telemetryData.driver2}]];
+        const color1 = d1.team_color || '#e10600';
+        const color2 = d2 ? (d2.team_color || '#00d2be') : null;
+
+        const chartDefaults = {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: false,
+            plugins: { legend: { display: !!d2, labels: { color: '#ccc', boxWidth: 12 } } },
+            scales: {
+                x: { display: false },
+                y: { ticks: { color: '#aaa', font: { size: 11 } }, grid: { color: '#333' } }
+            },
+            elements: { point: { radius: 0 }, line: { borderWidth: 1.5 } }
+        };
+
+        function makeDatasets(key, label1, label2) {
+            const ds = [{
+                label: label1 || d1.driver,
+                data: d1.telemetry[key],
+                borderColor: color1,
+                backgroundColor: color1 + '20',
+                fill: false,
+                tension: 0.1
+            }];
+            if (d2) {
+                ds.push({
+                    label: label2 || d2.driver,
+                    data: d2.telemetry[key],
+                    borderColor: color2,
+                    backgroundColor: color2 + '20',
+                    fill: false,
+                    tension: 0.1
+                });
+            }
+            return ds;
+        }
+
+        function buildChart(id, key, extra) {
+            const ctx = document.getElementById(id).getContext('2d');
+            return new Chart(ctx, {
+                type: 'line',
+                data: { labels: d1.telemetry.distance, datasets: makeDatasets(key) },
+                options: Object.assign({}, chartDefaults, extra || {})
+            });
+        }
+
+        buildChart('speedChart', 'speed');
+        buildChart('throttleChart', 'throttle', { scales: { ...chartDefaults.scales, y: { min: 0, max: 100, ticks: { color: '#aaa', font: { size: 11 } }, grid: { color: '#333' } } } });
+
+        // Brake as bar
+        const brakeCtx = document.getElementById('brakeChart').getContext('2d');
+        const brakeDs = [{
+            label: d1.driver,
+            data: d1.telemetry.brake,
+            backgroundColor: color1 + 'aa',
+            borderWidth: 0
+        }];
+        if (d2) brakeDs.push({ label: d2.driver, data: d2.telemetry.brake, backgroundColor: color2 + 'aa', borderWidth: 0 });
+        new Chart(brakeCtx, {
+            type: 'bar',
+            data: { labels: d1.telemetry.distance, datasets: brakeDs },
+            options: { ...chartDefaults, scales: { ...chartDefaults.scales, y: { min: 0, max: 1, ticks: { color: '#aaa', font: { size: 11 } }, grid: { color: '#333' } } } }
+        });
+
+        buildChart('gearChart', 'gear', { scales: { ...chartDefaults.scales, y: { min: 1, max: 8, ticks: { color: '#aaa', font: { size: 11 }, stepSize: 1 }, grid: { color: '#333' } } }, elements: { line: { stepped: true, borderWidth: 1.5 }, point: { radius: 0 } } });
+        buildChart('rpmChart', 'rpm');
+    </script>
+
+</div>
+</body>
+</html>
