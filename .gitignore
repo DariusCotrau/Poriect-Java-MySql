@@ -43,3 +43,4 @@ Thumbs.db
 
 # Database
 *.db
+.claude/settings.local.json
