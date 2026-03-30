@@ -20,6 +20,11 @@ public class DriverService {
         return driverRepository.findAllWithTeam();
     }
 
+    public List<Driver> findAllBySeason(int season) {
+        if (season == 0) return driverRepository.findAllWithTeam();
+        return driverRepository.findAllWithTeamOnlyBySeason(season);
+    }
+
     public Driver findById(Long id) {
         return driverRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Driver not found: " + id));
@@ -37,5 +42,10 @@ public class DriverService {
 
     public List<Driver> findAllSortedByPoints() {
         return driverRepository.findAllWithTeamOrderByNrPuncteDesc();
+    }
+
+    public List<Driver> findAllSortedByPointsBySeason(int season) {
+        if (season == 0) return driverRepository.findAllWithTeamOrderByNrPuncteDesc();
+        return driverRepository.findAllWithTeamBySeason(season);
     }
 }

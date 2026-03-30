@@ -20,8 +20,10 @@ public class DriverController {
     }
 
     @GetMapping
-    public String list(Model model) {
-        model.addAttribute("drivers", driverService.findAll());
+    public String list(@RequestParam(defaultValue = "0") int season, Model model) {
+        model.addAttribute("drivers", driverService.findAllBySeason(season));
+        model.addAttribute("selectedSeason", season);
+        model.addAttribute("seasons", new int[]{2026, 2025, 2024, 2023, 2022, 2021, 2020});
         return "drivers/list";
     }
 
@@ -29,6 +31,7 @@ public class DriverController {
     public String createForm(Model model) {
         model.addAttribute("driver", new Driver());
         model.addAttribute("teams", teamService.findAll());
+        model.addAttribute("seasons", new int[]{2026, 2025, 2024, 2023, 2022, 2021, 2020});
         return "drivers/form";
     }
 
@@ -43,6 +46,7 @@ public class DriverController {
     public String editForm(@PathVariable Long id, Model model) {
         model.addAttribute("driver", driverService.findById(id));
         model.addAttribute("teams", teamService.findAll());
+        model.addAttribute("seasons", new int[]{2026, 2025, 2024, 2023, 2022, 2021, 2020});
         return "drivers/form";
     }
 

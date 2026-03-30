@@ -5,7 +5,16 @@
 <head><title>Clasament Echipe</title></head>
 <body>
 <div layout:fragment="content">
-    <h2>Campionatul Echipelor</h2>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Campionatul Echipelor</h2>
+        <form th:action="@{/leaderboard/teams}" method="get" class="d-flex align-items-center gap-2 mb-0">
+            <label class="text-muted small mb-0">Sezon:</label>
+            <select name="season" class="form-select form-select-sm bg-dark text-light border-secondary" style="width:auto" onchange="this.form.submit()">
+                <option value="0" th:selected="${selectedSeason == 0}">Toate</option>
+                <option th:each="y : ${seasons}" th:value="${y}" th:text="${y}" th:selected="${selectedSeason == y}"></option>
+            </select>
+        </form>
+    </div>
 
     <div class="table-responsive">
         <table class="table table-dark table-hover">

@@ -5,6 +5,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.time.LocalDate;
 import java.util.Map;
@@ -64,6 +65,26 @@ public class F1LiveController {
             model.addAttribute("telemetryData", telemetry);
         }
         return "f1live/telemetry";
+    }
+
+    @GetMapping(value = "/animation-data", produces = "application/json")
+    @ResponseBody
+    public Map<String, Object> animationData(
+            @RequestParam int year,
+            @RequestParam int round,
+            @RequestParam(defaultValue = "1") int lapStart,
+            @RequestParam(defaultValue = "10") int lapEnd) {
+        return f1DataService.getTrackAnimation(year, round, lapStart, lapEnd);
+    }
+
+    @GetMapping("/race-replay")
+    public String raceReplay(
+            @RequestParam int year,
+            @RequestParam int round,
+            Model model) {
+        model.addAttribute("year", year);
+        model.addAttribute("round", round);
+        return "f1live/race-replay";
     }
 
     @GetMapping("/track-map")

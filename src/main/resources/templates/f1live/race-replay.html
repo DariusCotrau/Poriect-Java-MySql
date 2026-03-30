@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <title>Race Replay</title>
+    <style>
+        #replay-canvas { background: #000; border-radius: 8px; display: block; cursor: pointer; }
+        .leaderboard-entry { display: flex; align-items: center; gap: 6px; padding: 2px 0; font-size: 0.82rem; }
+        .compound-dot {
+            width: 18px; height: 18px; border-radius: 50%;
+            display: inline-flex; align-items: center; justify-content: center;
+            font-size: 10px; font-weight: bold; flex-shrink: 0;
+        }
+        #progress-bar { cursor: pointer; accent-color: #e10600; }
+        .control-btn { background: #222; border: 1px solid #444; color: #fff; border-radius: 4px;
+                       padding: 4px 10px; cursor: pointer; font-size: 0.85rem; }
+        .control-btn:hover { background: #333; }
+        .control-btn.active { background: #e10600; border-color: #e10600; }
+        #loading-overlay {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.85); display: flex; flex-direction: column;
+            align-items: center; justify-content: center; border-radius: 8px; z-index: 10;
+        }
+        .canvas-wrapper { position: relative; }
+    </style>
+</head>
+<body>
+<div layout:fragment="content">
+
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a th:href="@{/f1/calendar(year=${year})}">Calendar</a></li>
+            <li class="breadcrumb-item active">Race Replay</li>
+        </ol>
+    </nav>
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 id="event-title">
+            <span class="text-muted">Se incarca...</span>
+            <span class="badge bg-danger ms-2">Race</span>
+        </h2>
+        <!-- Lap range selector -->
+        <form id="lap-form" class="d-flex align-items-center gap-2">
+            <input type="hidden" name="year" th:value="${year}"/>
+            <input type="hidden" name="round" th:value="${round}"/>
+            <label class="text-muted small mb-0">Tururi:</label>
+            <input type="number" id="lap-start" name="lapStart" value="1" min="1"
+                   class="form-control form-control-sm bg-dark text-light border-secondary" style="width:60px"/>
+            <span class="text-muted">—</span>
+            <input type="number" id="lap-end" name="lapEnd" value="15" min="1"
+                   class="form-control form-control-sm bg-dark text-light border-secondary" style="width:60px"/>
+            <button type="button" id="load-btn" class="btn btn-sm btn-danger">Incarca</button>
+        </form>
+    </div>
+
+    <!-- Controls -->
+    <div class="d-flex align-items-center gap-3 mb-2">
+        <button class="control-btn" id="btn-play" title="Play/Pause">&#9654;</button>
+        <button class="control-btn" id="btn-restart" title="Restart">&#9664;&#9664;</button>
+        <input type="range" id="progress-bar" min="0" value="0" style="flex:1; height:6px"/>
+        <span id="lap-display" class="text-muted small" style="min-width:70px">Tur — / —</span>
+        <span class="text-muted small">Viteza:</span>
+        <button class="control-btn active" data-speed="1">1x</button>
+        <button class="control-btn" data-speed="5">5x</button>
+        <button class="control-btn" data-speed="15">15x</button>
+        <button class="control-btn" data-speed="30">30x</button>
+    </div>
+
+    <div class="row g-3">
+        <!-- Canvas -->
+        <div class="col-lg-8">
+            <div class="canvas-wrapper">
+                <canvas id="replay-canvas" width="800" height="800"></canvas>
+                <div id="loading-overlay">
+                    <div class="spinner-border text-danger mb-3" role="status"></div>
+                    <div id="loading-text" class="text-light">Se incarca datele...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Live Leaderboard -->
+        <div class="col-lg-4">
+            <div class="card bg-dark border-secondary h-100">
+                <div class="card-header text-center fw-bold">
+                    Leaderboard Live
+                    <span id="current-lap-badge" class="badge bg-danger ms-2">Tur 1</span>
+                </div>
+                <div class="card-body py-2" id="leaderboard-live"></div>
+            </div>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        const YEAR = [[${year}]];
+        const ROUND = [[${round}]];
+
+        const canvas = document.getElementById('replay-canvas');
+        const ctx = canvas.getContext('2d');
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const loadingText = document.getElementById('loading-text');
+        const progressBar = document.getElementById('progress-bar');
+        const lapDisplay = document.getElementById('lap-display');
+        const currentLapBadge = document.getElementById('current-lap-badge');
+        const leaderboardEl = document.getElementById('leaderboard-live');
+        const eventTitle = document.getElementById('event-title');
+
+        let animData = null;
+        let frameIndex = 0;       // integer data frame (for UI/scrubber)
+        let racePos = 0;          // float position in data frames (for interpolation)
+        let playing = false;
+        let speed = 1;            // race-seconds per real-second multiplier
+        let lapFrames = {};
+
+        // Off-screen canvas for track (pre-rendered, not redrawn every frame)
+        const trackCanvas = document.createElement('canvas');
+        trackCanvas.width = 800; trackCanvas.height = 800;
+        const tCtx = trackCanvas.getContext('2d');
+
+        // 24 fps cap
+        const TARGET_FPS = 24;
+        const FRAME_MS = 1000 / TARGET_FPS;
+        let lastFrameTime = 0;
+        let lastRAFTime = null;
+
+        // Speed buttons
+        document.querySelectorAll('[data-speed]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('[data-speed]').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                speed = parseInt(btn.dataset.speed);
+            });
+        });
+
+        document.getElementById('btn-play').addEventListener('click', togglePlay);
+        document.getElementById('btn-restart').addEventListener('click', () => {
+            racePos = 0; frameIndex = 0; lastRAFTime = null;
+            progressBar.value = 0;
+            if (!playing) drawFrameInterp(0, 0);
+            updateLapDisplay();
+        });
+        progressBar.addEventListener('input', () => {
+            racePos = parseInt(progressBar.value);
+            frameIndex = Math.floor(racePos);
+            lastRAFTime = null;
+            drawFrameInterp(frameIndex, 0);
+            updateLapDisplay();
+        });
+        document.getElementById('load-btn').addEventListener('click', loadAnimation);
+
+        function togglePlay() {
+            if (!animData) return;
+            playing = !playing;
+            lastRAFTime = null;
+            document.getElementById('btn-play').textContent = playing ? '⏸' : '▶';
+            if (playing) requestAnimationFrame(animLoop);
+        }
+
+        function animLoop(timestamp) {
+            if (!playing) return;
+            requestAnimationFrame(animLoop);
+
+            // 24 fps cap
+            if (timestamp - lastFrameTime < FRAME_MS) return;
+            lastFrameTime = timestamp;
+
+            if (lastRAFTime === null) { lastRAFTime = timestamp; return; }
+
+            const realDeltaSec = Math.min((timestamp - lastRAFTime) / 1000, 0.1); // cap spike
+            lastRAFTime = timestamp;
+
+            // Advance race position: speed race-seconds/s × hz data-frames/race-second
+            const delta = realDeltaSec * speed * animData.hz;
+            racePos = Math.min(racePos + delta, animData.n_frames - 1);
+            frameIndex = Math.floor(racePos);
+            const frac = racePos - frameIndex;
+
+            progressBar.value = frameIndex;
+            updateLapDisplay();
+            drawFrameInterp(frameIndex, frac);
+
+            if (racePos >= animData.n_frames - 1) {
+                playing = false;
+                document.getElementById('btn-play').textContent = '▶';
+            }
+        }
+
+        function updateLapDisplay() {
+            if (!animData) return;
+            let currentLap = animData.lap_start;
+            for (const [lap, fi] of Object.entries(lapFrames)) {
+                if (frameIndex >= fi) currentLap = parseInt(lap);
+            }
+            lapDisplay.textContent = `Tur ${currentLap} / ${animData.total_laps}`;
+            currentLapBadge.textContent = `Tur ${currentLap}`;
+        }
+
+        function preRenderTrack(track) {
+            tCtx.clearRect(0, 0, 800, 800);
+            if (track.length < 2) return;
+            const drawLine = (color, width) => {
+                tCtx.beginPath();
+                tCtx.moveTo(track[0][0], track[0][1]);
+                for (let i = 1; i < track.length; i++) tCtx.lineTo(track[i][0], track[i][1]);
+                tCtx.closePath();
+                tCtx.strokeStyle = color; tCtx.lineWidth = width;
+                tCtx.lineCap = 'round'; tCtx.lineJoin = 'round'; tCtx.stroke();
+            };
+            drawLine('#444', 12);
+            drawLine('#777', 4);
+        }
+
+        function drawFrameInterp(fi, frac) {
+            if (!animData) return;
+            ctx.clearRect(0, 0, 800, 800);
+            ctx.drawImage(trackCanvas, 0, 0); // blit pre-rendered track
+
+            const SIZE = 9;
+            const leaderboardData = [];
+
+            for (const [drvNum, drvInfo] of Object.entries(animData.drivers)) {
+                const fData = animData.frames[drvNum];
+                if (!fData || fi >= fData.x.length) continue;
+
+                const x0 = fData.x[fi], y0 = fData.y[fi];
+                const fi1 = Math.min(fi + 1, fData.x.length - 1);
+                // Linear interpolation between current and next data frame
+                const x = x0 + (fData.x[fi1] - x0) * frac;
+                const y = y0 + (fData.y[fi1] - y0) * frac;
+                const color = drvInfo.team_color || '#fff';
+
+                ctx.fillStyle = 'rgba(0,0,0,0.45)';
+                ctx.fillRect(x - SIZE/2 + 1, y - SIZE/2 + 1, SIZE, SIZE);
+                ctx.fillStyle = color;
+                ctx.fillRect(x - SIZE/2, y - SIZE/2, SIZE, SIZE);
+
+                leaderboardData.push({ abbr: drvInfo.abbreviation, color });
+            }
+
+            updateLeaderboard(leaderboardData);
+        }
+
+        function updateLeaderboard(drivers) {
+            leaderboardEl.innerHTML = drivers.map((d, i) =>
+                `<div class="leaderboard-entry">
+                    <span class="text-muted" style="width:22px">${i + 1}.</span>
+                    <span style="color:${d.color};font-weight:bold">${d.abbr}</span>
+                </div>`
+            ).join('');
+        }
+
+        async function loadAnimation() {
+            const lapStart = parseInt(document.getElementById('lap-start').value) || 1;
+            const lapEnd = parseInt(document.getElementById('lap-end').value) || 15;
+
+            playing = false;
+            document.getElementById('btn-play').textContent = '▶';
+            loadingOverlay.style.display = 'flex';
+            loadingText.textContent = `Se incarca ${lapEnd - lapStart + 1} tururi... (poate dura 30-60s)`;
+
+            try {
+                const url = `/f1/animation-data?year=${YEAR}&round=${ROUND}&lapStart=${lapStart}&lapEnd=${lapEnd}`;
+                const resp = await fetch(url);
+                if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+                animData = await resp.json();
+
+                if (animData.error) throw new Error(animData.error);
+
+                lapFrames = animData.lap_frames || {};
+                racePos = 0; frameIndex = 0; lastRAFTime = null;
+                progressBar.max = animData.n_frames - 1;
+                progressBar.value = 0;
+
+                const titleSpan = eventTitle.querySelector('span');
+                titleSpan.textContent = animData.event_name || '';
+                titleSpan.className = 'text-danger fw-bold';
+
+                preRenderTrack(animData.track_outline);
+                loadingOverlay.style.display = 'none';
+                drawFrameInterp(0, 0);
+                updateLapDisplay();
+
+            } catch (err) {
+                loadingText.textContent = 'Eroare: ' + err.message;
+                loadingText.className = 'text-danger';
+            }
+        }
+
+        // Auto-load on page open
+        loadAnimation();
+    </script>
+</div>
+</body>
+</html>

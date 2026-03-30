@@ -4,6 +4,7 @@ import com.f1manager.model.GrandPrix;
 import com.f1manager.repository.GrandPrixRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -18,6 +19,13 @@ public class GrandPrixService {
 
     public List<GrandPrix> findAll() {
         return grandPrixRepository.findAllByOrderByDataGpAsc();
+    }
+
+    public List<GrandPrix> findAllByYear(int year) {
+        if (year == 0) return grandPrixRepository.findAllByOrderByDataGpAsc();
+        LocalDate start = LocalDate.of(year, 1, 1);
+        LocalDate end = LocalDate.of(year, 12, 31);
+        return grandPrixRepository.findAllByYear(start, end);
     }
 
     public GrandPrix findById(Long id) {

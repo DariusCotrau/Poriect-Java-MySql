@@ -84,6 +84,20 @@ public class F1DataService {
     }
 
     @SuppressWarnings("unchecked")
+    public Map<String, Object> getTrackAnimation(int year, int round, int lapStart, int lapEnd) {
+        try {
+            return restTemplate.getForObject(
+                    baseUrl + "/api/track-animation/" + year + "/" + round
+                    + "?lap_start=" + lapStart + "&lap_end=" + lapEnd + "&hz=2",
+                    Map.class);
+        } catch (ResourceAccessException e) {
+            return errorMap("Serviciul F1 nu este pornit.");
+        } catch (Exception e) {
+            return errorMap("Eroare animatie: " + e.getMessage());
+        }
+    }
+
+    @SuppressWarnings("unchecked")
     public Map<String, Object> getTrackMap(int year, int round, int lap) {
         try {
             return restTemplate.getForObject(

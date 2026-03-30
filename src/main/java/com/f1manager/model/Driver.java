@@ -29,6 +29,9 @@ public class Driver {
     @Column(name = "nr_castig", nullable = false)
     private int nrCastig;
 
+    @Column(name = "season")
+    private Integer season;
+
     public Driver() {}
 
     public Driver(String nume, Team team, int campionate, int nrPuncte, int nrPodium, int nrCastig) {
@@ -54,4 +57,6 @@ public class Driver {
     public void setNrPodium(int nrPodium) { this.nrPodium = nrPodium; }
     public int getNrCastig() { return nrCastig; }
     public void setNrCastig(int nrCastig) { this.nrCastig = nrCastig; }
+    public Integer getSeason() { return season; }
+    public void setSeason(Integer season) { this.season = season; }
 }

@@ -8,7 +8,16 @@
 <div layout:fragment="content">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2>Driveri</h2>
-        <a sec:authorize="hasRole('ADMIN')" th:href="@{/drivers/new}" class="btn btn-danger">+ Adauga Driver</a>
+        <div class="d-flex align-items-center gap-2">
+            <form th:action="@{/drivers}" method="get" class="d-flex align-items-center gap-2 mb-0">
+                <label class="text-muted small mb-0">Sezon:</label>
+                <select name="season" class="form-select form-select-sm bg-dark text-light border-secondary" style="width:auto" onchange="this.form.submit()">
+                    <option value="0" th:selected="${selectedSeason == 0}">Toate</option>
+                    <option th:each="y : ${seasons}" th:value="${y}" th:text="${y}" th:selected="${selectedSeason == y}"></option>
+                </select>
+            </form>
+            <a sec:authorize="hasRole('ADMIN')" th:href="@{/drivers/new}" class="btn btn-danger">+ Adauga Driver</a>
+        </div>
     </div>
 
     <div class="table-responsive">
@@ -17,6 +26,7 @@
                 <tr>
                     <th>Nume</th>
                     <th>Echipa</th>
+                    <th>Sezon</th>
                     <th>Campionate</th>
                     <th>Puncte</th>
                     <th>Podiumuri</th>
@@ -28,6 +38,7 @@
                 <tr th:each="driver : ${drivers}">
                     <td th:text="${driver.nume}"></td>
                     <td th:text="${driver.team.nume}"></td>
+                    <td th:text="${driver.season != null ? driver.season : '-'}"></td>
                     <td th:text="${driver.campionate}"></td>
                     <td th:text="${driver.nrPuncte}"></td>
                     <td th:text="${driver.nrPodium}"></td>

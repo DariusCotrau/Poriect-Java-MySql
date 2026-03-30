@@ -25,6 +25,14 @@
                         </option>
                     </select>
                 </div>
+                <div class="mb-3">
+                    <label for="season" class="form-label">Sezon</label>
+                    <select class="form-select" id="season" name="season">
+                        <option value="" th:selected="${driver.season == null}">— fara sezon —</option>
+                        <option th:each="y : ${seasons}" th:value="${y}" th:text="${y}"
+                                th:selected="${driver.season != null && driver.season == y}"></option>
+                    </select>
+                </div>
                 <div class="row">
                     <div class="col-md-3 mb-3">
                         <label for="campionate" class="form-label">Campionate</label>

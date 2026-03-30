@@ -41,4 +41,11 @@ public class TeamService {
         teams.sort(Comparator.comparingInt(Team::getTotalPuncte).reversed());
         return teams;
     }
+
+    public List<Team> findAllSortedByTotalPointsBySeason(int season) {
+        if (season == 0) return findAllSortedByTotalPoints();
+        List<Team> teams = teamRepository.findAllWithDriversBySeason(season);
+        teams.sort(Comparator.comparingInt(Team::getTotalPuncte).reversed());
+        return teams;
+    }
 }
