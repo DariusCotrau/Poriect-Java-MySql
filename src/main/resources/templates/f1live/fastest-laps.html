@@ -24,19 +24,19 @@
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2>
             Ture Rapide
-            <span th:if="${data.event_name != null}"
-                  th:text="${' — ' + data.event_name}"
+            <span th:if="${data['event_name'] != null}"
+                  th:text="${' — ' + data['event_name']}"
                   class="text-muted fs-5"></span>
         </h2>
         <a th:href="@{/f1/telemetry(year=${year},round=${round},sessionType='R')}"
            class="btn btn-outline-info btn-sm">Telemetrie</a>
     </div>
 
-    <div th:if="${data.error}" class="alert alert-danger">
-        <strong>Eroare:</strong> <span th:text="${data.error}"></span>
+    <div th:if="${data['error']}" class="alert alert-danger">
+        <strong>Eroare:</strong> <span th:text="${data['error']}"></span>
     </div>
 
-    <div th:if="${data.fastest_laps != null}" class="row">
+    <div th:if="${data['fastest_laps'] != null}" class="row">
 
         <!-- Table -->
         <div class="col-lg-6">
@@ -53,24 +53,24 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr th:each="lap : ${data.fastest_laps}">
+                        <tr th:each="lap : ${data['fastest_laps']}">
                             <td>
-                                <span th:if="${lap.position == 1}" class="text-warning fw-bold">1</span>
-                                <span th:if="${lap.position != 1}" th:text="${lap.position}"></span>
+                                <span th:if="${lap['position'] == 1}" class="text-warning fw-bold">1</span>
+                                <span th:if="${lap['position'] != 1}" th:text="${lap['position']}"></span>
                             </td>
                             <td>
                                 <span class="me-2" style="display:inline-block;width:4px;height:18px;border-radius:2px;vertical-align:middle;"
-                                      th:style="'background-color:' + ${lap.team_color} + ';display:inline-block;width:4px;height:18px;border-radius:2px;vertical-align:middle;'"></span>
-                                <strong th:text="${lap.driver}"></strong>
-                                <span th:text="${' ' + lap.full_name}" class="text-muted small"></span>
+                                      th:style="'background-color:' + ${lap['team_color']} + ';display:inline-block;width:4px;height:18px;border-radius:2px;vertical-align:middle;'"></span>
+                                <strong th:text="${lap['driver']}"></strong>
+                                <span th:text="${' ' + lap['full_name']}" class="text-muted small"></span>
                             </td>
-                            <td th:text="${lap.team}" class="text-muted small"></td>
-                            <td th:text="${lap.lap_number}"></td>
-                            <td th:text="${lap.lap_time}" class="font-monospace"></td>
+                            <td th:text="${lap['team']}" class="text-muted small"></td>
+                            <td th:text="${lap['lap_number']}"></td>
+                            <td th:text="${lap['lap_time']}" class="font-monospace"></td>
                             <td>
                                 <span class="badge"
-                                      th:classappend="${lap.compound == 'SOFT'} ? 'bg-danger' : (${lap.compound == 'MEDIUM'} ? 'bg-warning text-dark' : (${lap.compound == 'HARD'} ? 'bg-light text-dark' : 'bg-secondary'))"
-                                      th:text="${lap.compound}"></span>
+                                      th:classappend="${lap['compound'] == 'SOFT'} ? 'bg-danger' : (${lap['compound'] == 'MEDIUM'} ? 'bg-warning text-dark' : (${lap['compound'] == 'HARD'} ? 'bg-light text-dark' : 'bg-secondary'))"
+                                      th:text="${lap['compound']}"></span>
                             </td>
                         </tr>
                     </tbody>
@@ -88,8 +88,8 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <script th:if="${data.fastest_laps != null}" th:inline="javascript">
-        const laps = [[${data.fastest_laps}]];
+    <script th:if="${data['fastest_laps'] != null}" th:inline="javascript">
+        const laps = [[${data['fastest_laps']}]];
         const minTime = Math.min(...laps.map(l => l.lap_time_seconds));
 
         const labels = laps.map(l => l.driver);

@@ -32,13 +32,9 @@ def get_fastest_laps(year: int, round_num: int):
             laps = session.laps
 
         # Get fastest clean lap per driver
-        fastest_laps = (
-            laps.dropna(subset=["LapTime"])
-            .groupby("Driver", as_index=False)
-            .apply(lambda x: x.nsmallest(1, "LapTime"))
-            .reset_index(drop=True)
-            .sort_values("LapTime")
-        )
+        clean_laps = laps.dropna(subset=["LapTime"])
+        idx = clean_laps.groupby("Driver")["LapTime"].idxmin()
+        fastest_laps = clean_laps.loc[idx].sort_values("LapTime").reset_index(drop=True)
 
         results = []
         for i, (_, lap) in enumerate(fastest_laps.iterrows()):

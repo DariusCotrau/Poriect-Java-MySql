@@ -21,12 +21,12 @@ public class SecurityConfig {
         http
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/", "/drivers", "/teams", "/races",
-                    "/leaderboard/**", "/f1/**", "/css/**", "/js/**").permitAll()
+                    "/leaderboard/**", "/f1/**", "/css/**", "/js/**", "/error").permitAll()
                 .anyRequest().authenticated()
             )
             .formLogin(form -> form
                 .loginPage("/login")
-                .defaultSuccessUrl("/drivers")
+                .defaultSuccessUrl("/drivers", true)
                 .permitAll()
             )
             .logout(logout -> logout

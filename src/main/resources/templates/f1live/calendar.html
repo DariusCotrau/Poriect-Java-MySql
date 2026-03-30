@@ -17,16 +17,16 @@
         </form>
     </div>
 
-    <div th:if="${data.error}" class="alert alert-danger">
-        <strong>Eroare:</strong> <span th:text="${data.error}"></span>
+    <div th:if="${data['error']}" class="alert alert-danger">
+        <strong>Eroare:</strong> <span th:text="${data['error']}"></span>
         <div class="mt-2 small">Asigura-te ca microserviciul Python ruleaza:
             <code>cd f1-service &amp;&amp; start.bat</code>
         </div>
     </div>
 
-    <div th:if="${data.rounds != null}">
+    <div th:if="${data['rounds'] != null}">
         <p class="text-muted">Sezon <strong th:text="${selectedYear}"></strong> —
-            <span th:text="${#lists.size(data.rounds)}"></span> curse</p>
+            <span th:text="${#lists.size(data['rounds'])}"></span> curse</p>
 
         <div class="table-responsive">
             <table class="table table-dark table-striped table-hover">
@@ -41,25 +41,25 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr th:each="race : ${data.rounds}">
-                        <td th:text="${race.round}" class="text-muted"></td>
+                    <tr th:each="race : ${data['rounds']}">
+                        <td th:text="${race['round']}" class="text-muted"></td>
                         <td>
-                            <span th:text="${race.name}" class="fw-semibold"></span>
-                            <span th:if="${race.is_sprint}" class="badge bg-warning text-dark ms-1">Sprint</span>
+                            <span th:text="${race['name']}" class="fw-semibold"></span>
+                            <span th:if="${race['is_sprint']}" class="badge bg-warning text-dark ms-1">Sprint</span>
                         </td>
-                        <td th:text="${race.location + ', ' + race.country}" class="text-muted"></td>
-                        <td th:text="${race.date}"></td>
+                        <td th:text="${race['location'] + ', ' + race['country']}" class="text-muted"></td>
+                        <td th:text="${race['date']}"></td>
                         <td>
-                            <span th:text="${race.format}" class="text-muted small"></span>
+                            <span th:text="${race['format']}" class="text-muted small"></span>
                         </td>
                         <td>
-                            <a th:href="@{/f1/session(year=${selectedYear},round=${race.round},sessionType='R')}"
+                            <a th:href="@{/f1/session(year=${selectedYear},round=${race['round']},sessionType='R')}"
                                class="btn btn-sm btn-outline-light me-1">Cursa</a>
-                            <a th:href="@{/f1/session(year=${selectedYear},round=${race.round},sessionType='Q')}"
+                            <a th:href="@{/f1/session(year=${selectedYear},round=${race['round']},sessionType='Q')}"
                                class="btn btn-sm btn-outline-secondary me-1">Calificare</a>
-                            <a th:href="@{/f1/fastest-laps(year=${selectedYear},round=${race.round})}"
+                            <a th:href="@{/f1/fastest-laps(year=${selectedYear},round=${race['round']})}"
                                class="btn btn-sm btn-outline-danger me-1">Ture Rapide</a>
-                            <a th:href="@{/f1/telemetry(year=${selectedYear},round=${race.round},sessionType='R')}"
+                            <a th:href="@{/f1/telemetry(year=${selectedYear},round=${race['round']},sessionType='R')}"
                                class="btn btn-sm btn-outline-info">Telemetrie</a>
                         </td>
                     </tr>

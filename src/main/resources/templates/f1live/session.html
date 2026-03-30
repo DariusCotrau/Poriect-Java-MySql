@@ -10,14 +10,14 @@
     <nav aria-label="breadcrumb" class="mb-3">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a th:href="@{/f1/calendar(year=${year})}">Calendar</a></li>
-            <li class="breadcrumb-item active" th:text="${data.event_name ?: 'Sesiune'}"></li>
+            <li class="breadcrumb-item active" th:text="${data['event_name'] ?: 'Sesiune'}"></li>
         </ol>
     </nav>
 
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2>
-            <span th:text="${data.event_name ?: 'Sesiune'}"></span>
-            <span class="badge bg-danger ms-2" th:text="${data.session_name ?: sessionType}"></span>
+            <span th:text="${data['event_name'] ?: 'Sesiune'}"></span>
+            <span class="badge bg-danger ms-2" th:text="${data['session_name'] ?: sessionType}"></span>
         </h2>
         <!-- Session type switcher -->
         <div class="btn-group">
@@ -34,11 +34,11 @@
         </div>
     </div>
 
-    <div th:if="${data.error}" class="alert alert-danger">
-        <strong>Eroare:</strong> <span th:text="${data.error}"></span>
+    <div th:if="${data['error']}" class="alert alert-danger">
+        <strong>Eroare:</strong> <span th:text="${data['error']}"></span>
     </div>
 
-    <div th:if="${data.results != null}">
+    <div th:if="${data['results'] != null}">
         <div class="d-flex gap-2 mb-3">
             <a th:href="@{/f1/fastest-laps(year=${year},round=${round})}"
                class="btn btn-sm btn-outline-danger">Ture Rapide</a>
@@ -60,24 +60,24 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr th:each="result : ${data.results}">
+                    <tr th:each="result : ${data['results']}">
                         <td>
-                            <span th:if="${result.position == 1}" class="text-warning fw-bold">1</span>
-                            <span th:if="${result.position == 2}" class="text-secondary fw-bold">2</span>
-                            <span th:if="${result.position == 3}" style="color:#cd7f32" class="fw-bold">3</span>
-                            <span th:if="${result.position > 3}" th:text="${result.position}"></span>
+                            <span th:if="${result['position'] == 1}" class="text-warning fw-bold">1</span>
+                            <span th:if="${result['position'] == 2}" class="text-secondary fw-bold">2</span>
+                            <span th:if="${result['position'] == 3}" style="color:#cd7f32" class="fw-bold">3</span>
+                            <span th:if="${result['position'] > 3}" th:text="${result['position']}"></span>
                         </td>
-                        <td th:text="${result.driver_number}" class="text-muted"></td>
+                        <td th:text="${result['driver_number']}" class="text-muted"></td>
                         <td>
                             <span class="me-2" style="display:inline-block;width:4px;height:18px;border-radius:2px;vertical-align:middle;"
-                                  th:style="'background-color:' + ${result.team_color} + ';display:inline-block;width:4px;height:18px;border-radius:2px;vertical-align:middle;'"></span>
-                            <strong th:text="${result.abbreviation}"></strong>
-                            <span th:text="${' ' + result.full_name}" class="text-muted small"></span>
+                                  th:style="'background-color:' + ${result['team_color']} + ';display:inline-block;width:4px;height:18px;border-radius:2px;vertical-align:middle;'"></span>
+                            <strong th:text="${result['abbreviation']}"></strong>
+                            <span th:text="${' ' + result['full_name']}" class="text-muted small"></span>
                         </td>
-                        <td th:text="${result.team}"></td>
-                        <td th:text="${result.time}" class="font-monospace"></td>
-                        <td th:if="${sessionType == 'R'}" th:text="${result.points}"></td>
-                        <td th:text="${result.status}" class="text-muted small"></td>
+                        <td th:text="${result['team']}"></td>
+                        <td th:text="${result['time']}" class="font-monospace"></td>
+                        <td th:if="${sessionType == 'R'}" th:text="${result['points']}"></td>
+                        <td th:text="${result['status']}" class="text-muted small"></td>
                     </tr>
                 </tbody>
             </table>

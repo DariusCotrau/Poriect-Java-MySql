@@ -83,6 +83,19 @@ public class F1DataService {
         }
     }
 
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> getTrackMap(int year, int round, int lap) {
+        try {
+            return restTemplate.getForObject(
+                    baseUrl + "/api/track-map/" + year + "/" + round + "?lap=" + lap,
+                    Map.class);
+        } catch (ResourceAccessException e) {
+            return errorMap("Serviciul F1 nu este pornit. Ruleaza f1-service/start.bat");
+        } catch (Exception e) {
+            return errorMap("Eroare track map: " + e.getMessage());
+        }
+    }
+
     private Map<String, Object> errorMap(String message) {
         Map<String, Object> err = new HashMap<>();
         err.put("error", message);

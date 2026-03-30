@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <title>Track Map</title>
+    <style>
+        #track-canvas { background: #000; border-radius: 8px; display: block; }
+        .compound-badge {
+            display: inline-block; width: 20px; height: 20px; border-radius: 50%;
+            text-align: center; font-size: 11px; font-weight: bold; line-height: 20px;
+        }
+        .leaderboard-row { display: flex; align-items: center; gap: 8px; padding: 3px 0; font-size: 0.85rem; }
+        .lap-nav { display: flex; align-items: center; gap: 10px; }
+    </style>
+</head>
+<body>
+<div layout:fragment="content">
+
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a th:href="@{/f1/calendar(year=${year})}">Calendar</a></li>
+            <li class="breadcrumb-item active">Track Map</li>
+        </ol>
+    </nav>
+
+    <div th:if="${data['error']}" class="alert alert-danger">
+        <strong>Eroare:</strong> <span th:text="${data['error']}"></span>
+    </div>
+
+    <div th:if="${data['track_outline'] != null}">
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2>
+                <span th:text="${data['event_name']}"></span>
+                <span class="badge bg-danger ms-2">Race</span>
+            </h2>
+
+            <!-- Lap navigation -->
+            <div class="lap-nav">
+                <a th:if="${selectedLap > 1}"
+                   th:href="@{/f1/track-map(year=${year},round=${round},lap=${selectedLap - 1})}"
+                   class="btn btn-sm btn-outline-light">&#8592;</a>
+                <span class="text-muted">
+                    Tur <strong th:text="${data['lap']}"></strong>
+                    / <span th:text="${data['total_laps']}"></span>
+                </span>
+                <a th:if="${selectedLap < data['total_laps']}"
+                   th:href="@{/f1/track-map(year=${year},round=${round},lap=${selectedLap + 1})}"
+                   class="btn btn-sm btn-outline-light">&#8594;</a>
+                <form method="get" action="/f1/track-map" class="d-flex gap-1">
+                    <input type="hidden" name="year" th:value="${year}"/>
+                    <input type="hidden" name="round" th:value="${round}"/>
+                    <input type="number" name="lap" th:value="${selectedLap}"
+                           class="form-control form-control-sm bg-dark text-light border-secondary"
+                           style="width:70px" min="1" th:max="${data['total_laps']}"/>
+                    <button type="submit" class="btn btn-sm btn-danger">Go</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Track Canvas -->
+            <div class="col-lg-8">
+                <canvas id="track-canvas" width="800" height="800"></canvas>
+            </div>
+
+            <!-- Leaderboard -->
+            <div class="col-lg-4">
+                <div class="card bg-dark border-secondary h-100">
+                    <div class="card-header text-center fw-bold">Leaderboard</div>
+                    <div class="card-body py-2" id="leaderboard">
+                        <div th:each="drv : ${data['drivers']}" class="leaderboard-row">
+                            <span class="text-muted" style="width:28px"
+                                  th:text="${drv['position'] > 0 ? drv['position'] + '.' : '—'}"></span>
+                            <strong th:text="${drv['abbreviation']}"
+                                    th:style="'color:' + ${drv['team_color']}"></strong>
+                            <span th:with="c=${drv['compound']}"
+                                  th:class="${c == 'SOFT'} ? 'compound-badge bg-danger text-white' :
+                                             (${c == 'MEDIUM'} ? 'compound-badge bg-warning text-dark' :
+                                             (${c == 'HARD'} ? 'compound-badge bg-light text-dark' :
+                                             (${c == 'INTERMEDIATE'} ? 'compound-badge bg-success text-white' :
+                                             (${c == 'WET'} ? 'compound-badge bg-primary text-white' :
+                                              'compound-badge bg-secondary text-white'))))"
+                                  th:text="${c == 'SOFT'} ? 'S' :
+                                            (${c == 'MEDIUM'} ? 'M' :
+                                            (${c == 'HARD'} ? 'H' :
+                                            (${c == 'INTERMEDIATE'} ? 'I' :
+                                            (${c == 'WET'} ? 'W' : '?'))))">
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script th:if="${data['track_outline'] != null}" th:inline="javascript">
+        const trackOutline = [[${data['track_outline']}]];
+        const drivers = [[${data['drivers']}]];
+
+        const canvas = document.getElementById('track-canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Draw track outline
+        if (trackOutline.length > 1) {
+            ctx.beginPath();
+            ctx.moveTo(trackOutline[0][0], trackOutline[0][1]);
+            for (let i = 1; i < trackOutline.length; i++) {
+                ctx.lineTo(trackOutline[i][0], trackOutline[i][1]);
+            }
+            ctx.closePath();
+            ctx.strokeStyle = '#555';
+            ctx.lineWidth = 10;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.stroke();
+
+            // Inner highlight
+            ctx.beginPath();
+            ctx.moveTo(trackOutline[0][0], trackOutline[0][1]);
+            for (let i = 1; i < trackOutline.length; i++) {
+                ctx.lineTo(trackOutline[i][0], trackOutline[i][1]);
+            }
+            ctx.closePath();
+            ctx.strokeStyle = '#888';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+        }
+
+        // Draw drivers as colored squares
+        const SIZE = 10;
+        for (const drv of drivers) {
+            const x = drv.x;
+            const y = drv.y;
+
+            // Shadow
+            ctx.fillStyle = 'rgba(0,0,0,0.6)';
+            ctx.fillRect(x - SIZE/2 + 1, y - SIZE/2 + 1, SIZE, SIZE);
+
+            // Car square
+            ctx.fillStyle = drv.team_color || '#ffffff';
+            ctx.fillRect(x - SIZE/2, y - SIZE/2, SIZE, SIZE);
+        }
+    </script>
+
+</div>
+</body>
+</html>

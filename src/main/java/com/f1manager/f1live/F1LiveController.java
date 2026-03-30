@@ -66,6 +66,20 @@ public class F1LiveController {
         return "f1live/telemetry";
     }
 
+    @GetMapping("/track-map")
+    public String trackMap(
+            @RequestParam int year,
+            @RequestParam int round,
+            @RequestParam(defaultValue = "1") int lap,
+            Model model) {
+        Map<String, Object> data = f1DataService.getTrackMap(year, round, lap);
+        model.addAttribute("data", data);
+        model.addAttribute("year", year);
+        model.addAttribute("round", round);
+        model.addAttribute("selectedLap", lap);
+        return "f1live/track-map";
+    }
+
     @GetMapping("/fastest-laps")
     public String fastestLaps(
             @RequestParam int year,

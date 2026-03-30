@@ -28,13 +28,36 @@ def get_session_drivers(year: int, round_num: int, session_type: str):
         session.load(laps=False, telemetry=False, weather=False, messages=False)
 
         drivers = []
-        for _, row in session.results.iterrows():
-            drivers.append({
-                "abbreviation": str(row.get("Abbreviation", "")),
-                "full_name": f"{row.get('FirstName', '')} {row.get('LastName', '')}".strip(),
-                "team": str(row.get("TeamName", "")),
-                "team_color": get_team_color(row.get("TeamColor")),
-            })
+
+        results_ok = (session.results is not None and not session.results.empty
+                      and "Abbreviation" in session.results.columns)
+
+        if results_ok:
+            for _, row in session.results.iterrows():
+                drivers.append({
+                    "abbreviation": str(row.get("Abbreviation", "")),
+                    "full_name": f"{row.get('FirstName', '')} {row.get('LastName', '')}".strip(),
+                    "team": str(row.get("TeamName", "")),
+                    "team_color": get_team_color(row.get("TeamColor")),
+                })
+        else:
+            # Fallback for FP/old sessions without results: use driver list from session
+            for drv_num in session.drivers:
+                try:
+                    info = session.get_driver(drv_num)
+                    drivers.append({
+                        "abbreviation": str(info.get("Abbreviation", drv_num)),
+                        "full_name": f"{info.get('FirstName', '')} {info.get('LastName', '')}".strip(),
+                        "team": str(info.get("TeamName", "")),
+                        "team_color": get_team_color(info.get("TeamColor")),
+                    })
+                except Exception:
+                    drivers.append({
+                        "abbreviation": drv_num,
+                        "full_name": drv_num,
+                        "team": "",
+                        "team_color": "#FFFFFF",
+                    })
 
         return {"year": year, "round": round_num, "session_type": session_type, "drivers": drivers}
     except Exception as e:
@@ -65,8 +88,19 @@ def get_telemetry(year: int, round_num: int, session_type: str, driver: str, dri
             tel = tel.iloc[::step]
 
             lap_time = fastest["LapTime"]
-            driver_row = session.results[session.results["Abbreviation"] == drv]
-            team_color = get_team_color(driver_row.iloc[0]["TeamColor"]) if not driver_row.empty else "#FF0000"
+
+            # Get team color — results may be empty for FP sessions
+            team_color = "#FF0000"
+            try:
+                if (session.results is not None and not session.results.empty
+                        and "Abbreviation" in session.results.columns):
+                    driver_row = session.results[session.results["Abbreviation"] == drv]
+                    if not driver_row.empty:
+                        team_color = get_team_color(driver_row.iloc[0]["TeamColor"])
+                if team_color == "#FF0000" and "TeamColor" in laps.columns:
+                    team_color = get_team_color(laps.iloc[0].get("TeamColor", "#FF0000"))
+            except Exception:
+                pass
 
             return {
                 "driver": drv,
